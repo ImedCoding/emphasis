@@ -2,8 +2,11 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/": "pages/index.js",
-  "/auth/login": "pages/auth/login.js",
+  "/api/auth/[...nextauth]": "pages/api/auth/[...nextauth].js",
   "/auth/register": "pages/auth/register.js",
-  "/api/auth/[...nextauth]": "pages/api/auth/[...nextauth].js"
+  "/auth/login": "pages/auth/login.js",
+  "/profile/[id]": "pages/profile/[id].js",
+  "/profile": "pages/profile.js",
+  "/api/auth/register": "pages/api/auth/register.js",
+  "/": "pages/index.js"
 }

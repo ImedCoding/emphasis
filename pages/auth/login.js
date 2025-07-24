@@ -6,7 +6,7 @@ export default function Login() {
   const handleSubmit = async e => {
     e.preventDefault();
     const res = await signIn('credentials', { email, password, redirect: false });
-    if (res.ok) window.location.href = '/';
+    if (res.ok) window.location.href = '/profile';
     else alert('Identifiants incorrects');
   };
   return (
