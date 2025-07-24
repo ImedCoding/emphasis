@@ -6,7 +6,7 @@ import bcrypt from 'bcrypt';
 
 export default NextAuth({
   // Clé secrète, à définir dans .env.local en production
-  secret: process.env.NEXTAUTH_SECRET ?? 'dev-secret',
+  secret: process.env.NEXTAUTH_SECRET,
   adapter: PrismaAdapter(prisma),
   session: { strategy: 'jwt' },
   providers: [
