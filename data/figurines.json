@@ -1,0 +1,90 @@
+[
+    {
+        "collection": "Skullpanda",
+        "subSeries": [
+            {
+                "series": "L'impressionnisme",
+                "items": [
+                    {
+                        "name": "Teakwood",
+                        "imageRef": "/images/teakwood.png"
+                    },
+                    {
+                        "name": "Blossom",
+                        "imageRef": "/images/blossom.png"
+                    },
+                    {
+                        "name": "Pond",
+                        "imageRef": "/images/pond.png"
+                    },
+                    {
+                        "name": "Lightning",
+                        "imageRef": "/images/lightning.png"
+                    },
+                    {
+                        "name": "Windflower",
+                        "imageRef": "/images/windflower.png"
+                    },
+                    {
+                        "name": "Dawn",
+                        "imageRef": "/images/dawn.png"
+                    },
+                    {
+                        "name": "Mist",
+                        "imageRef": "/images/mist.png"
+                    },
+                    {
+                        "name": "Dew",
+                        "imageRef": "/images/dew.png"
+                    },
+                    {
+                        "name": "Amber",
+                        "imageRef": "/images/amber.png"
+                    },
+                    {
+                        "name": "In the garden",
+                        "imageRef": "/images/in_the_garden.png"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "collection": "Labubu THE MONSTERS",
+        "subSeries": [
+            {
+                "series": "Big into Energy",
+                "items": [
+                    {
+                        "name": "Love",
+                        "imageRef": "/images/love.png"
+                    },
+                    {
+                        "name": "Happiness",
+                        "imageRef": "/images/happiness.png"
+                    },
+                    {
+                        "name": "Loyalty",
+                        "imageRef": "/images/loyalty.png"
+                    },
+                    {
+                        "name": "Serenity",
+                        "imageRef": "/images/serenity.png"
+                    },
+                    {
+                        "name": "Hope",
+                        "imageRef": "/images/hope.png"
+                    },
+                    {
+                        "name": "Luck",
+                        "imageRef": "/images/luck.png"
+                    },
+                    {
+                        "name": "Secret",
+                        "imageRef": "/images/secret.png"
+                    }
+                ]
+            }
+        ]
+    }
+]
