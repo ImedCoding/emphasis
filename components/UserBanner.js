@@ -36,7 +36,6 @@ export default function UserBanner({ userId, avatar, bio, country, count }) {
         country: form.country
       }),
     });
-    console.log(res);
     if (res.ok) {
       setShowModal(false);
       window.location.reload();

@@ -8,8 +8,12 @@ export default function Navbar() {
   return (
     <nav className="bg-white shadow-md">
       <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="text-xl font-bold text-indigo-600">
-          Emphasis
+        <Link href="/">
+          <img
+            src="/images/logo.png"
+            alt="Emphasis Logo"
+            className="h-20 cursor-pointer"
+          />
         </Link>
         <div className="space-x-4 flex items-center">
           <Link

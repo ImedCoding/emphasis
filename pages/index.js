@@ -1,46 +1,12 @@
 import Link from 'next/link';
 import { getSession } from 'next-auth/react';
 import Footer from '../components/Footer';
+import Navbar from '../components/Navbar';
 
 export default function Home({ session }) {
   return (
     <>
-      {/* Navbar */}
-      <nav className="bg-white shadow-md">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="text-xl font-bold text-indigo-600">
-            Emphasis
-          </Link>
-          <div className="space-x-4">
-            <Link href="/community" className="text-gray-700 hover:text-indigo-600">
-              Communauté
-            </Link>
-            {session ? (
-              <Link
-                href={`/profile/${session.user.id}`}
-                className="px-4 py-2 border border-indigo-600 text-indigo-600 rounded hover:bg-indigo-50"
-              >
-                Mon Profil
-              </Link>
-            ) : (
-              <>
-                <Link
-                  href="/auth/register"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                >
-                  Inscription
-                </Link>
-                <Link
-                  href="/auth/login"
-                  className="px-4 py-2 border border-indigo-600 text-indigo-600 rounded hover:bg-indigo-50"
-                >
-                  Connexion
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white py-20">
