@@ -17,7 +17,7 @@ const COUNTRIES = [
   { code: 'DE', label: 'Allemagne' },
 ];
 
-export default function UserBanner({ userId, avatar, bio, country, count }) {
+export default function UserBanner({ userId, name, avatar, bio, country, count }) {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ avatar, bio, country });
 
@@ -54,6 +54,7 @@ export default function UserBanner({ userId, avatar, bio, country, count }) {
             className="w-24 h-24 rounded-full object-cover"
           />
           <div>
+            <h1 className="text-3xl font-bold">{name}</h1>
             <h2 className="text-2xl font-bold">{count} figurines</h2>
             <p className="text-gray-600">Pays : {country || 'Non précisé'}</p>
           </div>

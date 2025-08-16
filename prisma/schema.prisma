@@ -72,6 +72,7 @@ model Collection {
   figurineId   String
   qrCode       String
   proofPhotos  PhotoProof[]
+  verifiedAt   DateTime?
   createdAt    DateTime    @default(now())
   @@unique([userId, figurineId])
 }

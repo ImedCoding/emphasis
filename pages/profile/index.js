@@ -1,18 +1,58 @@
 // pages/profile/index.js
-import { getSession } from 'next-auth/react';
-import prisma from '../../lib/prisma';
-import Navbar from '../../components/Navbar';
-import UserBanner from '../../components/UserBanner';
-import CollectionGroup from '../../components/CollectionGroup';
-import Footer from '../../components/Footer';
+import { getSession, useSession } from "next-auth/react";
+import prisma from "../../lib/prisma";
+import Navbar from "../../components/Navbar";
+import UserBanner from "../../components/UserBanner";
+import CollectionGroup from "../../components/CollectionGroup";
+import Footer from "../../components/Footer";
+import { useEffect, useState } from "react";
 
 export default function ProfilePage({ user, collections, totalOwned }) {
+  const { data: session } = useSession();
+  const [cols, setCols] = useState(collections);
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    const es = new EventSource(
+      `/api/stream/validations?userId=${session.user.id}`
+    );
+
+    es.onmessage = (evt) => {
+      try {
+        const { figurineId, proofUrl } = JSON.parse(evt.data);
+        // Mettre l'item en owned + remplacer l'image par la photo
+        setCols((prev) =>
+          prev.map((group) => ({
+            ...group,
+            subSeries: group.subSeries.map((ss) => ({
+              ...ss,
+              items: ss.items.map((it) =>
+                it.id === figurineId
+                  ? { ...it, owned: true, imageRef: proofUrl }
+                  : it
+              ),
+            })),
+          }))
+        );
+      } catch (_) {}
+    };
+
+    es.onerror = () => {
+      // en dev, Next peut recharger: on ferme
+      es.close();
+    };
+
+    return () => es.close();
+  }, [session?.user?.id]);
+
   return (
     <>
       <Navbar />
       <main className="container mx-auto px-6 py-8">
         <UserBanner
           userId={user.id}
+          name={user.name}
           avatar={user.avatar}
           bio={user.bio}
           country={user.country}
@@ -20,9 +60,7 @@ export default function ProfilePage({ user, collections, totalOwned }) {
         />
 
         <section className="mt-10 space-y-8">
-           <CollectionGroup
-              collections={collections}
-            />
+          <CollectionGroup collections={cols} />
         </section>
       </main>
       <Footer />
@@ -33,7 +71,7 @@ export default function ProfilePage({ user, collections, totalOwned }) {
 export async function getServerSideProps(ctx) {
   const session = await getSession(ctx);
   if (!session) {
-    return { redirect: { destination: '/auth/login', permanent: false } };
+    return { redirect: { destination: "/auth/login", permanent: false } };
   }
 
   // Récupère l'utilisateur et ses collections
@@ -48,7 +86,7 @@ export async function getServerSideProps(ctx) {
     },
   });
 
-    // Récupère toutes les figurines et celles possédées
+  // Récupère toutes les figurines et celles possédées
   const [allFigurines, owned] = await Promise.all([
     prisma.figurine.findMany(),
     prisma.collection.findMany({
@@ -68,7 +106,7 @@ export async function getServerSideProps(ctx) {
     if (!mapCollections.has(fig.collection)) {
       mapCollections.set(fig.collection, {
         collection: fig.collection,
-        subSeriesMap: new Map(),  // temporaire
+        subSeriesMap: new Map(), // temporaire
       });
     }
     const colEntry = mapCollections.get(fig.collection);
