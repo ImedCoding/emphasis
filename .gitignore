@@ -3,3 +3,5 @@ node_modules/
 prisma/dev.db
 .env.local
 data/*.json
+public/uploads/
+.vscode/

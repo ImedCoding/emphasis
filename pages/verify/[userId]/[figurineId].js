@@ -1,15 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/router';
-import prisma from '../../../lib/prisma';
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/router";
+import prisma from "../../../lib/prisma";
 
 export default function Verify({ userId, figurineId, figurine }) {
   const router = useRouter();
+  const { t } = router.query; // token ajouté dans l’URL du QR
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const [streamOk, setStreamOk] = useState(false);
   const [step, setStep] = useState(1);
   const [photoBlob, setPhotoBlob] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState('');
+  const [previewUrl, setPreviewUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
   // Init caméra à l'étape 2
@@ -19,8 +20,8 @@ export default function Verify({ userId, figurineId, figurine }) {
       (async () => {
         try {
           stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: { ideal: 'environment' } },
-            audio: false
+            video: { facingMode: { ideal: "environment" } },
+            audio: false,
           });
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
@@ -28,14 +29,14 @@ export default function Verify({ userId, figurineId, figurine }) {
             setStreamOk(true);
           }
         } catch (e) {
-          console.warn('getUserMedia indisponible, fallback file input', e);
+          console.warn("getUserMedia indisponible, fallback file input", e);
           setStreamOk(false);
         }
       })();
     }
     return () => {
-      if (stream && typeof stream.getTracks === 'function') {
-        stream.getTracks().forEach(t => t.stop());
+      if (stream && typeof stream.getTracks === "function") {
+        stream.getTracks().forEach((t) => t.stop());
       }
     };
   }, [step]);
@@ -50,14 +51,18 @@ export default function Verify({ userId, figurineId, figurine }) {
     canvas.width = w;
     canvas.height = h;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     ctx.drawImage(video, 0, 0, w, h);
 
-    canvas.toBlob((blob) => {
-      setPhotoBlob(blob);
-      setPreviewUrl(URL.createObjectURL(blob));
-      setStep(3);
-    }, 'image/jpeg', 0.92);
+    canvas.toBlob(
+      (blob) => {
+        setPhotoBlob(blob);
+        setPreviewUrl(URL.createObjectURL(blob));
+        setStep(3);
+      },
+      "image/jpeg",
+      0.92
+    );
   };
 
   const onFallbackFile = (e) => {
@@ -70,19 +75,28 @@ export default function Verify({ userId, figurineId, figurine }) {
 
   const submitProof = async () => {
     if (!photoBlob) return;
+    if (!t) {
+      alert("Token manquant. Rechargez via le QR-code.");
+      return;
+    }
     setLoading(true);
+
     const form = new FormData();
-    form.append('photo', photoBlob, 'proof.jpg');
+    form.append("photo", photoBlob, "proof.jpg");
+    form.append("token", t); // ⬅️ IMPORTANT
     try {
-      const res = await fetch(`/api/collections/${userId}/${figurineId}/upload`, {
-        method: 'POST',
-        body: form
-      });
-      if (!res.ok) throw new Error('Upload failed');
+      const res = await fetch(
+        `/api/collections/${userId}/${figurineId}/upload`,
+        {
+          method: "POST",
+          body: form,
+        }
+      );
+      if (!res.ok) throw new Error("Upload failed");
       setStep(4); // succès visuel
     } catch (e) {
       console.error(e);
-      alert('Erreur lors de l’upload');
+      alert("Erreur lors de l'upload");
     } finally {
       setLoading(false);
     }
@@ -96,9 +110,14 @@ export default function Verify({ userId, figurineId, figurine }) {
         {step === 1 && (
           <>
             <p className="mb-6">
-              Scannez ce QR avec votre téléphone. Appuyez ensuite sur « Commencer » pour ouvrir la caméra et prendre la photo de votre figurine.
+              Scannez ce QR avec votre téléphone. Appuyez ensuite sur «
+              Commencer » pour ouvrir la caméra et prendre la photo de votre
+              figurine.
             </p>
-            <button onClick={() => setStep(2)} className="w-full py-2 bg-indigo-600 text-white rounded">
+            <button
+              onClick={() => setStep(2)}
+              className="w-full py-2 bg-indigo-600 text-white rounded"
+            >
               Commencer
             </button>
           </>
@@ -108,15 +127,24 @@ export default function Verify({ userId, figurineId, figurine }) {
           <>
             {streamOk ? (
               <div className="space-y-4">
-                <video ref={videoRef} playsInline muted className="w-full rounded border" />
-                <button onClick={takePicture} className="w-full py-2 bg-indigo-600 text-white rounded">
+                <video
+                  ref={videoRef}
+                  playsInline
+                  muted
+                  className="w-full rounded border"
+                />
+                <button
+                  onClick={takePicture}
+                  className="w-full py-2 bg-indigo-600 text-white rounded"
+                >
                   Prendre la photo
                 </button>
               </div>
             ) : (
               <div className="space-y-4">
                 <p className="text-sm text-gray-600">
-                  Votre appareil ne permet pas l’accès direct à la caméra. Utilisez ce bouton pour prendre une photo :
+                  Votre appareil ne permet pas l’accès direct à la caméra.
+                  Utilisez ce bouton pour prendre une photo :
                 </p>
                 <input
                   type="file"
@@ -127,7 +155,10 @@ export default function Verify({ userId, figurineId, figurine }) {
                 />
               </div>
             )}
-            <button onClick={() => setStep(1)} className="mt-4 px-4 py-2 bg-gray-300 rounded">
+            <button
+              onClick={() => setStep(1)}
+              className="mt-4 px-4 py-2 bg-gray-300 rounded"
+            >
               Retour
             </button>
           </>
@@ -135,20 +166,36 @@ export default function Verify({ userId, figurineId, figurine }) {
 
         {step === 3 && (
           <>
-            {previewUrl && <img src={previewUrl} alt="Aperçu" className="mb-4 w-full h-64 object-contain rounded" />}
+            {previewUrl && (
+              <img
+                src={previewUrl}
+                alt="Aperçu"
+                className="mb-4 w-full h-64 object-contain rounded"
+              />
+            )}
             <div className="flex justify-between">
-              <button onClick={() => setStep(2)} className="px-4 py-2 bg-gray-300 rounded" disabled={loading}>
+              <button
+                onClick={() => setStep(2)}
+                className="px-4 py-2 bg-gray-300 rounded"
+                disabled={loading}
+              >
                 Reprendre
               </button>
-              <button onClick={submitProof} className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50" disabled={loading}>
-                {loading ? 'Envoi…' : 'Valider la photo'}
+              <button
+                onClick={submitProof}
+                className="px-4 py-2 bg-green-600 text-white rounded disabled:opacity-50"
+                disabled={loading}
+              >
+                {loading ? "Envoi…" : "Valider la photo"}
               </button>
             </div>
           </>
         )}
 
         {step === 4 && (
-          <p className="text-green-700 font-semibold">Photo enregistrée ! Vous pouvez fermer cette page.</p>
+          <p className="text-green-700 font-semibold">
+            Photo enregistrée ! Vous pouvez fermer cette page.
+          </p>
         )}
       </div>
       {/* Canvas hors-écran pour capture */}
@@ -161,7 +208,7 @@ export async function getServerSideProps({ params }) {
   const { userId, figurineId } = params;
   const figurine = await prisma.figurine.findUnique({
     where: { id: figurineId },
-    select: { name: true }
+    select: { name: true },
   });
   if (!figurine) return { notFound: true };
   return { props: { userId, figurineId, figurine } };

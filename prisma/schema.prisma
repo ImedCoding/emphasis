@@ -62,6 +62,7 @@ model Figurine {
   imageRef    String
   collections Collection[]
   @@unique([collection, series, name], name: "unique_figurine")
+  @@index([collection, series])
 }
 
 model Collection {
@@ -71,10 +72,12 @@ model Collection {
   figurine     Figurine    @relation(fields: [figurineId], references: [id])
   figurineId   String
   qrCode       String
+  qrToken      String?     @unique   // ⬅️ token de vérif à usage unique
   proofPhotos  PhotoProof[]
   verifiedAt   DateTime?
   createdAt    DateTime    @default(now())
   @@unique([userId, figurineId])
+  @@index([userId, verifiedAt])      // pour tes listes “owned”
 }
 
 model PhotoProof {

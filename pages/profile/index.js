@@ -6,7 +6,7 @@ import UserBanner from "../../components/UserBanner";
 import CollectionGroup from "../../components/CollectionGroup";
 import Footer from "../../components/Footer";
 import { useEffect } from "react";
-import { useRouter } from 'next/router';
+import { useRouter } from "next/router";
 
 export default function ProfilePage({ user, collections, totalOwned }) {
   const router = useRouter();
@@ -15,22 +15,18 @@ export default function ProfilePage({ user, collections, totalOwned }) {
   useEffect(() => {
     if (!session?.user?.id) return;
 
-    const es = new EventSource(
-      `/api/stream/validations?userId=${session.user.id}`
-    );
-
-    es.onmessage = async (evt) => {
-    // On recharge la page pour refléter la BDD
-      console.log("Nouvelle validation reçue", evt.data);
-      router.replace(router.asPath, undefined, { scroll: false });
+    let es;
+    const connect = () => {
+      es = new EventSource(`/api/stream/validations?userId=${session.user.id}`);
+      es.onmessage = () =>
+        router.replace(router.asPath, undefined, { scroll: false });
+      es.onerror = () => {
+        es.close();
+        setTimeout(connect, 1500); // ⬅️ auto-retry
+      };
     };
-
-    es.onerror = () => {
-      // en dev, Next peut recharger: on ferme
-      es.close();
-    };
-
-    return () => es.close();
+    connect();
+    return () => es?.close();
   }, [session?.user?.id]);
 
   return (
@@ -126,7 +122,7 @@ export async function getServerSideProps(ctx) {
       id: fig.id,
       name: fig.name,
       imageRef: proofUrl || fig.imageRef, // ✅ remplace l’image si preuve dispo
-      owned: ownedSet.has(fig.id),        // ✅ true seulement si verifiedAt != null
+      owned: ownedSet.has(fig.id), // ✅ true seulement si verifiedAt != null
     });
   }
 

@@ -27,10 +27,9 @@ export default function UserBanner({ userId, name, avatar, bio, country, count }
 
   const handleSave = async () => {
     const res = await fetch('/api/user/update', {
-      method: 'POST',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId: userId,
         avatar: form.avatar,
         bio: form.bio,
         country: form.country

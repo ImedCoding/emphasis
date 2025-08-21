@@ -1,44 +1,32 @@
-// pages/api/collections/[userId]/[figurineId]/index.js
-import prisma from '../../../../../lib/prisma';
-import QRCode from 'qrcode';
+import prisma from '../../../../../lib/prisma'
+import QRCode from 'qrcode'
+import crypto from 'crypto'
 
 export default async function handler(req, res) {
-  const { userId, figurineId } = req.query;
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
+  const { userId, figurineId } = req.query
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' })
 
   try {
-    // 1) Génère l'URL à encoder dans le QR
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-    const verifyPath = `/verify/${userId}/${figurineId}`;
-    const toEncode = `${baseUrl}${verifyPath}`;
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const token = crypto.randomBytes(16).toString('hex')   // ⬅️ token aléatoire
+    const verifyUrl = `${baseUrl}/verify/${userId}/${figurineId}?t=${token}`
 
-    // 2) Crée le Data-URL PNG
-    const qrDataUrl = await QRCode.toDataURL(toEncode);
+    const qrDataUrl = await QRCode.toDataURL(verifyUrl)
 
-    // 3) Upsert la collection et stocke le QR
     const collection = await prisma.collection.upsert({
-      where: {
-        userId_figurineId: {
-          userId: String(userId),
-          figurineId: String(figurineId),
-        },
-      },
-      update: {
-        qrCode: qrDataUrl,
-      },
+      where: { userId_figurineId: { userId: String(userId), figurineId: String(figurineId) } },
+      update: { qrCode: qrDataUrl, qrToken: token }, // ⬅️ stocke le token
       create: {
-        user:      { connect: { id: String(userId) } },
-        figurine:  { connect: { id: String(figurineId) } },
-        qrCode:    qrDataUrl,
+        user:     { connect: { id: String(userId) } },
+        figurine: { connect: { id: String(figurineId) } },
+        qrCode:   qrDataUrl,
+        qrToken:  token,
       },
-    });
+    })
 
-    return res.status(200).json(collection);
-  } catch (error) {
-    console.error('Error in /api/collections/[userId]/[figurineId]:', error);
-    return res.status(500).json({ error: 'Cannot add to collection' });
+    res.status(200).json(collection)
+  } catch (e) {
+    console.error(e)
+    res.status(500).json({ error: 'Cannot generate QR code' })
   }
 }
