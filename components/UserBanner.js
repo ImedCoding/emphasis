@@ -1,23 +1,30 @@
 // components/UserBanner.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 // Exemple simple de liste d'avatars prédéfinis
 const AVATARS = [
-  '/images/avatars/amber_avatar.png',
-  '/images/avatars/in_the_garden_avatar.png',
-  '/images/avatars/luck_avatar.png',
-  '/images/avatars/secret_avatar.png',
+  "/images/avatars/amber_avatar.png",
+  "/images/avatars/in_the_garden_avatar.png",
+  "/images/avatars/luck_avatar.png",
+  "/images/avatars/secret_avatar.png",
 ];
 
 // Exemple minimaliste de liste de pays
 const COUNTRIES = [
-  { code: 'FR', label: 'France' },
-  { code: 'US', label: 'États-Unis' },
-  { code: 'JP', label: 'Japon' },
-  { code: 'DE', label: 'Allemagne' },
+  { code: "FR", label: "France" },
+  { code: "US", label: "États-Unis" },
+  { code: "JP", label: "Japon" },
+  { code: "DE", label: "Allemagne" },
 ];
 
-export default function UserBanner({ userId, name, avatar, bio, country, count }) {
+export default function UserBanner({
+  name,
+  avatar,
+  bio,
+  country,
+  count,
+  canEdit = true,
+}) {
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ avatar, bio, country });
 
@@ -26,13 +33,13 @@ export default function UserBanner({ userId, name, avatar, bio, country, count }
   }, [avatar, bio, country]);
 
   const handleSave = async () => {
-    const res = await fetch('/api/user/update', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch("/api/user/update", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         avatar: form.avatar,
         bio: form.bio,
-        country: form.country
+        country: form.country,
       }),
     });
     if (res.ok) {
@@ -55,19 +62,23 @@ export default function UserBanner({ userId, name, avatar, bio, country, count }
           <div>
             <h1 className="text-3xl font-bold">{name}</h1>
             <h2 className="text-2xl font-bold">{count} figurines</h2>
-            <p className="text-gray-600">Pays : {country || 'Non précisé'}</p>
+            <p className="text-gray-600">Pays : {country || "Non précisé"}</p>
           </div>
         </div>
-        <p className="text-gray-700 flex-1 mx-8">{bio || 'Aucune bio renseignée.'}</p>
-        <button
-          onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-indigo-600 text-white rounded"
-        >
-          Modifier
-        </button>
+        <p className="text-gray-700 flex-1 mx-8">
+          {bio || "Aucune bio renseignée."}
+        </p>
+        {canEdit && (
+          <button
+            onClick={() => setShowModal(true)}
+            className="px-4 py-2 bg-indigo-600 text-white rounded"
+          >
+            Modifier
+          </button>
+        )}
       </div>
 
-      {showModal && (
+      {showModal && canEdit && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-8 rounded-lg w-11/12 max-w-md">
             <h3 className="text-xl font-semibold mb-4">Modifier mon profil</h3>
@@ -79,9 +90,11 @@ export default function UserBanner({ userId, name, avatar, bio, country, count }
                   key={url}
                   src={url}
                   alt="Avatar option"
-                  onClick={() => setForm(prev => ({ ...prev, avatar: url }))}
+                  onClick={() => setForm((prev) => ({ ...prev, avatar: url }))}
                   className={`w-16 h-16 rounded-full cursor-pointer border-2 ${
-                    form.avatar === url ? 'border-indigo-600' : 'border-transparent'
+                    form.avatar === url
+                      ? "border-indigo-600"
+                      : "border-transparent"
                   }`}
                 />
               ))}
@@ -92,12 +105,16 @@ export default function UserBanner({ userId, name, avatar, bio, country, count }
               <label className="block mb-1">Pays</label>
               <select
                 className="w-full p-2 border rounded"
-                value={form.country || ''}
-                onChange={e => setForm(prev => ({ ...prev, country: e.target.value }))}
+                value={form.country || ""}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, country: e.target.value }))
+                }
               >
                 <option value="">Choisir...</option>
-                {COUNTRIES.map(c => (
-                  <option key={c.code} value={c.label}>{c.label}</option>
+                {COUNTRIES.map((c) => (
+                  <option key={c.code} value={c.label}>
+                    {c.label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -108,8 +125,10 @@ export default function UserBanner({ userId, name, avatar, bio, country, count }
               <textarea
                 className="w-full p-2 border rounded"
                 rows={3}
-                value={form.bio || ''}
-                onChange={e => setForm(prev => ({ ...prev, bio: e.target.value }))}
+                value={form.bio || ""}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, bio: e.target.value }))
+                }
                 placeholder="Ta bio..."
               />
             </div>
