@@ -16,7 +16,6 @@ import { useRouter } from "next/router";
  */
 export default function CollectionGroup({ collections }) {
   const { data: session } = useSession();
-  const router = useRouter();
 
   // État pour stocker les QR générés, par id de figurine
   const [qrMap, setQrMap] = useState({});
@@ -110,8 +109,9 @@ function SubSeriesGroup({ sub, handleAdd, qrMap }) {
                     <img
                       src={qr}
                       alt={`QR code pour vérifier ${f.name}`}
-                      className="w-24 h-24 mx-auto cursor-pointer"
+                      className="w-24 h-24 mx-auto select-none pointer-events-none cursor-default"
                     />
+                    <p className="text-xs text-gray-500 mt-1">Scannez avec votre téléphone</p>
                   </div>
                 )}
 

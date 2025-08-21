@@ -5,11 +5,12 @@ import Navbar from "../../components/Navbar";
 import UserBanner from "../../components/UserBanner";
 import CollectionGroup from "../../components/CollectionGroup";
 import Footer from "../../components/Footer";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useRouter } from 'next/router';
 
 export default function ProfilePage({ user, collections, totalOwned }) {
+  const router = useRouter();
   const { data: session } = useSession();
-  const [cols, setCols] = useState(collections);
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -18,24 +19,10 @@ export default function ProfilePage({ user, collections, totalOwned }) {
       `/api/stream/validations?userId=${session.user.id}`
     );
 
-    es.onmessage = (evt) => {
-      try {
-        const { figurineId, proofUrl } = JSON.parse(evt.data);
-        // Mettre l'item en owned + remplacer l'image par la photo
-        setCols((prev) =>
-          prev.map((group) => ({
-            ...group,
-            subSeries: group.subSeries.map((ss) => ({
-              ...ss,
-              items: ss.items.map((it) =>
-                it.id === figurineId
-                  ? { ...it, owned: true, imageRef: proofUrl }
-                  : it
-              ),
-            })),
-          }))
-        );
-      } catch (_) {}
+    es.onmessage = async (evt) => {
+    // On recharge la page pour refléter la BDD
+      console.log("Nouvelle validation reçue", evt.data);
+      router.replace(router.asPath, undefined, { scroll: false });
     };
 
     es.onerror = () => {
@@ -60,7 +47,7 @@ export default function ProfilePage({ user, collections, totalOwned }) {
         />
 
         <section className="mt-10 space-y-8">
-          <CollectionGroup collections={cols} />
+          <CollectionGroup collections={collections} />
         </section>
       </main>
       <Footer />
@@ -74,44 +61,56 @@ export async function getServerSideProps(ctx) {
     return { redirect: { destination: "/auth/login", permanent: false } };
   }
 
-  // Récupère l'utilisateur et ses collections
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      id: true,
-      name: true,
-      avatar: true,
-      bio: true,
-      country: true,
-    },
-  });
-
-  // Récupère toutes les figurines et celles possédées
-  const [allFigurines, owned] = await Promise.all([
+  // 1) User + toutes les figurines + collections VÉRIFIÉES (pas juste créées)
+  const [user, allFigurines, verified] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        avatar: true,
+        bio: true,
+        country: true,
+      },
+    }),
     prisma.figurine.findMany(),
     prisma.collection.findMany({
-      where: { userId: session.user.id },
-      select: { figurineId: true },
+      where: {
+        userId: session.user.id,
+        verifiedAt: { not: null }, // ✅ clé: seulement les collections vérifiées
+      },
+      select: {
+        figurineId: true,
+        proofPhotos: {
+          orderBy: { id: "desc" }, // si pas de createdAt, mets { id: 'desc' }
+          take: 1,
+          select: { urlImage: true },
+        },
+      },
     }),
   ]);
 
-  const ownedSet = new Set(owned.map((o) => o.figurineId));
+  // 2) Map figurineId -> dernière photo de preuve (si dispo)
+  const proofByFigurineId = new Map(
+    verified.map((c) => [c.figurineId, c.proofPhotos[0]?.urlImage || null])
+  );
+
+  // 3) Set des figurines owned (uniquement vérifiées)
+  const ownedSet = new Set(proofByFigurineId.keys());
   const totalOwned = ownedSet.size;
 
-  // Regroupe d'abord par collection puis par sous-série
+  // 4) Groupement Collection -> subSeries -> items
   const mapCollections = new Map();
 
   for (const fig of allFigurines) {
-    // 1) Collection
     if (!mapCollections.has(fig.collection)) {
       mapCollections.set(fig.collection, {
         collection: fig.collection,
-        subSeriesMap: new Map(), // temporaire
+        subSeriesMap: new Map(),
       });
     }
     const colEntry = mapCollections.get(fig.collection);
 
-    // 2) Sous-série
     if (!colEntry.subSeriesMap.has(fig.series)) {
       colEntry.subSeriesMap.set(fig.series, {
         series: fig.series,
@@ -120,16 +119,17 @@ export async function getServerSideProps(ctx) {
     }
     const seriesEntry = colEntry.subSeriesMap.get(fig.series);
 
-    // 3) Ajouter l'item
+    // si vérifiée : on montre la photo de preuve, sinon l'image par défaut
+    const proofUrl = proofByFigurineId.get(fig.id) || null;
+
     seriesEntry.items.push({
       id: fig.id,
       name: fig.name,
-      imageRef: fig.imageRef,
-      owned: ownedSet.has(fig.id),
+      imageRef: proofUrl || fig.imageRef, // ✅ remplace l’image si preuve dispo
+      owned: ownedSet.has(fig.id),        // ✅ true seulement si verifiedAt != null
     });
   }
 
-  // Convertit en tableau au format voulu
   const collections = Array.from(mapCollections.values()).map((col) => ({
     collection: col.collection,
     subSeries: Array.from(col.subSeriesMap.values()),

@@ -79,7 +79,7 @@ model Collection {
 
 model PhotoProof {
   id           String      @id @default(uuid())
-  collection   Collection  @relation(fields: [collectionId], references: [id])
+  collection   Collection  @relation(fields: [collectionId], references: [id], onDelete: Cascade)
   collectionId String
   urlImage     String
   timestamp    DateTime    @default(now())
