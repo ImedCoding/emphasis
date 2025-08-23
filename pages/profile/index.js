@@ -15,19 +15,40 @@ export default function ProfilePage({ user, collections, totalOwned }) {
   useEffect(() => {
     if (!session?.user?.id) return;
 
+    const mode = process.env.NEXT_PUBLIC_REALTIME_MODE || 'sse';
     let es;
-    const connect = () => {
+    let interval;
+
+    const reloadIfChanged = async () => {
+      try {
+        const r = await fetch('/api/profile/verified-count');
+        if (!r.ok) return;
+        const { count } = await r.json();
+        if (count !== totalOwned) {
+          router.replace(router.asPath, undefined, { scroll: false });
+        }
+      } catch {}
+    };
+
+    if (mode === 'sse') {
+      // SSE (OK en local sur Node process unique)
       es = new EventSource(`/api/stream/validations?userId=${session.user.id}`);
-      es.onmessage = () =>
-        router.replace(router.asPath, undefined, { scroll: false });
+      es.onmessage = () => router.replace(router.asPath, undefined, { scroll: false });
       es.onerror = () => {
         es.close();
-        setTimeout(connect, 1500); // ⬅️ auto-retry
+        // fallback automatique si SSE casse
+        interval = setInterval(reloadIfChanged, 3000);
       };
+    } else {
+      // Polling direct (recommandé sur Vercel jusqu’à une solution “pub/sub”)
+      interval = setInterval(reloadIfChanged, 3000);
+    }
+
+    return () => {
+      if (es) es.close();
+      if (interval) clearInterval(interval);
     };
-    connect();
-    return () => es?.close();
-  }, [session?.user?.id]);
+  }, [session?.user?.id, totalOwned]);
 
   return (
     <>
