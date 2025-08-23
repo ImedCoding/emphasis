@@ -5,3 +5,4 @@ prisma/dev.db
 data/*.json
 public/uploads/
 .vscode/
+.env
